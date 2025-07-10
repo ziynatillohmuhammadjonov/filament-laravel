@@ -1,0 +1,16 @@
+{
+	frankenphp
+}
+
+:80 {
+	# Laravel'ning public papkasi
+	root public/
+
+	# Fayllarni siqish (optional, lekin foydali)
+	encode zstd br gzip
+
+	# PHP fayllarni ishlatish
+	php_server {
+		try_files {path} index.php
+	}
+}
