@@ -1,0 +1,105 @@
+services:
+  app:
+    build:
+      context: dockerfiles
+      dockerfile: frankenphp.Dockerfile
+    image: franken-laravel
+    container_name: franken-laravel
+    working_dir: /app
+    volumes:
+      - ./src:/app
+    env_file:
+      - .env
+    ports:
+      - 8000:80
+    depends_on:
+      - pgsql
+      - redis
+    restart: unless-stopped
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  queue:
+    image: franken-laravel
+    container_name: queue-worker
+    command: php artisan queue:work
+    working_dir: /app
+    volumes:
+      - ./src:/app
+    env_file:
+      - .env
+    depends_on:
+      - app
+      - redis
+    restart: unless-stopped
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan queue:work --once || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  pgsql:
+    image: postgres:17
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    restart: unless-stopped
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - 8080:80
+    depends_on:
+      - pgsql
+    restart: unless-stopped
+    networks:
+      - internal
+
+  redis:
+    image: redis:alpine
+    container_name: redis-server
+    ports:
+      - 6379:6379
+    restart: unless-stopped
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
+    driver: bridge
