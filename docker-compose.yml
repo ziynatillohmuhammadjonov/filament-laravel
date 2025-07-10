@@ -4,14 +4,14 @@ services:
       context: dockerfiles
       dockerfile: frankenphp.Dockerfile
     image: franken-laravel
-    container_name: franken-laravel
+    container_name: franken-laravel-filament
     working_dir: /app
     volumes:
       - ./src:/app
     env_file:
       - .env
     ports:
-      - 8000:80
+      - 8001:80
     depends_on:
       - pgsql
       - redis
@@ -27,7 +27,7 @@ services:
 
   queue:
     image: franken-laravel
-    container_name: queue-worker
+    container_name: queue-worker-filament
     command: php artisan queue:work
     working_dir: /app
     volumes:
@@ -49,7 +49,7 @@ services:
 
   pgsql:
     image: postgres:17
-    container_name: postgres-db
+    container_name: postgres-db-filament
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
@@ -57,7 +57,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - 5433:5432
     restart: unless-stopped
     networks:
       - internal
@@ -70,12 +70,12 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin
+    container_name: pgadmin-filament
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
-      - 8080:80
+      - 8081:80
     depends_on:
       - pgsql
     restart: unless-stopped
@@ -84,9 +84,9 @@ services:
 
   redis:
     image: redis:alpine
-    container_name: redis-server
+    container_name: redis-server-filament
     ports:
-      - 6379:6379
+      - 6380:6379
     restart: unless-stopped
     networks:
       - internal
