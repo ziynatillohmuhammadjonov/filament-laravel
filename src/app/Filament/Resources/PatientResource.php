@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
+use function Laravel\Prompts\table;
+
 class PatientResource extends Resource
 {
     protected static ?string $model = Patient::class;
@@ -23,7 +25,7 @@ class PatientResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                Forms\Components\TextInput::make('name')->string()->required()->maxLength(255),
                 Forms\Components\Select::make('type')->options([
                     'cat' => 'Cat',
                     'dog' => 'Dog',
@@ -31,7 +33,27 @@ class PatientResource extends Resource
                 ])->required(),
                 Forms\Components\DatePicker::make('date_of_birth')
                     ->required()
+                    ->native(false)
                     ->maxDate(now()),
+                Forms\Components\Select::make('owner_id')
+                    ->relationship('owner', 'name') //bunda owner metodidagi user modelini namelarini ko'rsatadi
+                    ->searchable() //select dropdownga qidiruv inputini qo'shadi
+                    ->preload() //ma'lumotlar avval yuklab keyin search qilinadi. Agar bu bo'lmasa har bir searchda so'rov ketadi
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email address')
+                            ->email()
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Phone number')
+                            ->tel()
+                            ->required()
+                    ])
+                    ->required()
             ]);
     }
 
@@ -39,10 +61,21 @@ class PatientResource extends Resource
     {
         return $table
             ->columns([
-                //
+                Tables\Columns\TextColumn::make('name')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('type'),
+                Tables\Columns\TextColumn::make('date_of_birth')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('owner.name')
+                    ->searchable()
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('type')
+                    ->options([
+                        'cat' => 'Cat',
+                        'dog' => 'Dog',
+                        'rabbit' => 'Rabbit',
+                    ])
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -57,7 +90,7 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\TreatmentsRelationManager::class
         ];
     }
 
