@@ -12,9 +12,6 @@ class Settings extends Page
     protected static string $view = 'filament.pages.settings';
     public $defaultAction = 'onboarding';
 
-    public $defaultActionArguments = ['step' => 2];
-
-
     protected function getHeaderActions(): array
     {
         return [
@@ -24,11 +21,5 @@ class Settings extends Page
                 ->requiresConfirmation()
                 ->action(fn() => $this->post->delete()),
         ];
-    }
-    public function onboardingAction(): Action
-    {
-        return Action::make('onboarding')
-            ->modalHeading('Welcome')
-            ->visible(fn(): bool => ! auth()->user()->isOnBoarded());
     }
 }
